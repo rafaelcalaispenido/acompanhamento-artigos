@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acompanhamento de Artigos — eNotas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="logo-enotas.jpg" type="image/jpeg">
+  <style>
+    :root {
+      --primary:#7b3fc5;--ph:#6930b0;--pl:#f3eeff;--pm:#e2d0f8;
+      --bg:#f5f6fa;--white:#fff;--border:#e5e7eb;--border2:#d1d5db;
+      --text:#111827;--muted:#6b7280;--dim:#9ca3af;
+      --green:#16a34a;--gl:#f0fdf4;--gb:#bbf7d0;
+      --blue:#2563eb;--bl:#eff6ff;
+      --orange:#d97706;--red:#dc2626;--rl:#fef2f2;
+      --sw:228px;--th:64px;
+      --ss:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+      --sm:0 4px 12px rgba(0,0,0,.08);
+      --sl:0 8px 24px rgba(0,0,0,.12);
+      --r:8px;--rs:6px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sw);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:200}
+    .sh{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+    .sh-logo{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .sh-logo img{height:26px;width:auto;object-fit:contain}
+    .logo-fb{height:26px;display:none;align-items:center;font-weight:700;font-size:14px;color:var(--primary)}
+    .sh-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    .s-nav{flex:1;padding:8px 10px;overflow-y:auto}
+    .nlbl{font-size:10.5px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;padding:10px 8px 4px}
+    .ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rs);color:var(--muted);font-size:13.5px;font-weight:500;cursor:pointer;transition:all .13s;margin-bottom:1px}
+    .ni:hover{background:var(--bg);color:var(--text)}
+    .ni.active{background:var(--pl);color:var(--primary);font-weight:600}
+    .ni-ico{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+    .nbadge{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:30px;background:var(--pl);color:var(--primary)}
+    .s-foot{padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--dim);display:flex;align-items:center;gap:6px}
+    .sdot{width:7px;height:7px;border-radius:50%;background:#d1d5db;flex-shrink:0;transition:all .3s}
+    .sdot.ok{background:var(--green);box-shadow:0 0 0 2px #dcfce7}
+    .sdot.err{background:var(--red);box-shadow:0 0 0 2px #fee2e2}
+    .sdot.spin{background:var(--orange);animation:blink 1s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+    /* MAIN */
+    #main{margin-left:var(--sw);min-height:100vh;display:flex;flex-direction:column}
+    .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:1px solid var(--border);height:var(--th);display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+    .tb-center{flex:1;text-align:center}
+    .tb-center h1{font-size:15px;font-weight:700}
+    .tb-center p{font-size:12px;color:var(--muted)}
+    .tb-right{display:flex;align-items:center;gap:8px}
+    .pbadge{font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:30px;background:var(--pl);color:var(--primary);border:1px solid var(--pm)}
+    .content{padding:24px 28px;flex:1}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rs);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .13s}
+    .btn-outline{background:var(--white);color:var(--text);border-color:var(--border2)}
+    .btn-outline:hover{background:var(--bg)}
+    .btn-sm{padding:5px 11px;font-size:12px}
+
+    /* VIEWS */
+    .view{display:none}
+    .view.active{display:block}
+
+    /* KPI */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+    .kc{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--ss);position:relative;overflow:hidden}
+    .kc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .kc.co::after{background:var(--orange)}
+    .kc.cg::after{background:var(--green)}
+    .kc.cp::after{background:var(--primary)}
+    .klbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .kval{font-size:28px;font-weight:700;line-height:1}
+    .ksub{font-size:11.5px;color:var(--muted);margin-top:4px}
+
+    /* CARDS */
+    .card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--ss)}
+    .card-h{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .card-t{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+    .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .do{background:var(--orange)}
+    .dg{background:var(--green)}
+    .dp{background:var(--primary)}
+
+    /* ARTICLE ITEMS */
+    .art-item{background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;box-shadow:var(--ss);cursor:pointer;transition:box-shadow .14s,border-color .14s;overflow:hidden}
+    .art-item:hover{border-color:var(--primary);box-shadow:var(--sm)}
+    .art-item-head{padding:13px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .art-item-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:#fafafa}
+    .art-item-body.open{display:block}
+    .art-item-body .lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+    .art-link{font-size:13px;color:var(--primary);text-decoration:none;word-break:break-all;display:block;margin-bottom:3px}
+    .art-link:hover{text-decoration:underline}
+    .art-uni-item{font-size:12.5px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--border);word-break:break-all}
+    .art-uni-item:last-child{border-bottom:none}
+
+    /* TAGS */
+    .tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:30px;font-size:11.5px;font-weight:600}
+    .tg {background:var(--gl);color:var(--green);border:1px solid var(--gb)}
+    .tgr{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+    .tp {background:var(--pl);color:var(--primary);border:1px solid var(--pm)}
+    .tb2{background:var(--bl);color:var(--blue);border:1px solid #bfdbfe}
+    .te {background:#ecfdf5;color:#059669;border:1px solid #a7f3d0}
+    .ttl{background:#ecfeff;color:#0891b2;border:1px solid #a5f3fc}
+    .tr {background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+    .t-homolog{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+    .t-prod{background:var(--gl);color:var(--green);border:1px solid var(--gb)}
+    .col-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media(max-width:860px){.col-grid{grid-template-columns:1fr}}
+    .col-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid}
+    .col-title.homolog{color:#d97706;border-color:#fde68a}
+    .col-title.prod{color:var(--green);border-color:var(--gb)}
+    .empty-state{text-align:center;padding:32px 20px;color:var(--muted);font-size:13px}
+    .fb{display:flex;align-items:center;justify-content:space-between}
+    .mt4{margin-top:16px}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+    @media(max-width:900px){.row2{grid-template-columns:1fr}}
+    #loader{position:fixed;inset:0;background:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;z-index:9000}
+    #loader.on{display:flex}
+    .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .65s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #toast-area{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+    .toast{padding:11px 16px;border-radius:var(--rs);font-size:13px;font-weight:500;box-shadow:var(--sl);display:flex;align-items:center;gap:8px;max-width:320px;animation:su .22s ease}
+    .toast.ok{background:#14532d;color:#d1fae5}
+    .toast.err{background:#7f1d1d;color:#fee2e2}
+    .toast.inf{background:#1e3a5f;color:#dbeafe}
+    @keyframes su{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
+  </style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sh">
+    <div class="sh-logo">
+      <img id="logoImg" src="logo-enotas.jpg" alt="eNotas">
+      <div class="logo-fb" id="logoFb">📋 eNotas</div>
+    </div>
+    <div class="sh-title">Acompanhamento · Central de Ajuda</div>
+  </div>
+  <nav class="s-nav">
+    <div class="nlbl">Visualização</div>
+    <div class="ni active" id="nav-overview" onclick="goTo('overview')"><span class="ni-ico">📊</span> Visão Geral</div>
+    <div class="ni" id="nav-homolog"   onclick="goTo('homolog')">  <span class="ni-ico">⏳</span> Homologação <span class="nbadge" id="nbHomolog">—</span></div>
+    <div class="ni" id="nav-prod"      onclick="goTo('prod')">     <span class="ni-ico">🚀</span> Produção    <span class="nbadge" id="nbProd">—</span></div>
+  </nav>
+  <div class="s-foot">
+    <span class="sdot spin" id="sdot"></span>
+    <span id="stxt">Carregando…</span>
+  </div>
+</nav>
+
+<div id="main">
+  <div class="topbar">
+    <div style="min-width:80px"></div>
+    <div class="tb-center">
+      <h1>Gestão de Conhecimento — eNotas</h1>
+      <p>Acompanhamento de Artigos · Central de Ajuda</p>
+    </div>
+    <div class="tb-right">
+      <span class="pbadge">Atualiza às 18:00</span>
+      <button class="btn btn-outline btn-sm" onclick="loadData()">🔄 Atualizar</button>
+    </div>
+  </div>
+  <div id="errBanner" style="display:none;background:#dc2626;color:#fff;padding:10px 28px;font-size:13px;border-bottom:1px solid #b91c1c"></div>
+
+  <div class="content">
+
+    <!-- VISÃO GERAL -->
+    <div class="view active" id="view-overview">
+      <div class="kpi-grid">
+        <div class="kc co"><div class="klbl">Em Homologação</div><div class="kval" id="kHomolog">0</div><div class="ksub">aguardando validação</div></div>
+        <div class="kc cg"><div class="klbl">Em Produção</div><div class="kval" id="kProd">0</div><div class="ksub">publicados no Zendesk</div></div>
+        <div class="kc cp"><div class="klbl">Total Tratados</div><div class="kval" id="kTotal">0</div><div class="ksub">de 50 tópicos</div></div>
+      </div>
+
+      <div class="row2">
+        <div class="card">
+          <div class="card-h"><div class="card-t"><span class="dot do"></span>Por Analista — Homologação</div></div>
+          <div id="overviewHomolog" style="padding:14px 18px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div class="card-t"><span class="dot dg"></span>Por Analista — Produção</div></div>
+          <div id="overviewProd" style="padding:14px 18px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+
+      <div class="card mt4">
+        <div class="card-h fb">
+          <div class="card-t"><span class="dot dp"></span>Todos os Artigos Tratados</div>
+          <select id="filterOverview" onchange="renderOverviewTable()" style="padding:4px 10px;font-size:12px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--white);font-family:inherit">
+            <option value="">Todos</option>
+            <option value="homologacao">Homologação</option>
+            <option value="producao">Produção</option>
+          </select>
+        </div>
+        <div id="overviewTable" style="padding:0"></div>
+      </div>
+    </div>
+
+    <!-- HOMOLOGAÇÃO -->
+    <div class="view" id="view-homolog">
+      <div class="fb" style="margin-bottom:20px">
+        <h2 style="font-size:17px;font-weight:700">⏳ Em Homologação</h2>
+        <span class="tag t-homolog" id="homologCount">0 artigos</span>
+      </div>
+      <div id="homologCards"></div>
+    </div>
+
+    <!-- PRODUÇÃO -->
+    <div class="view" id="view-prod">
+      <div class="fb" style="margin-bottom:20px">
+        <h2 style="font-size:17px;font-weight:700">🚀 Em Produção</h2>
+        <span class="tag t-prod" id="prodCount">0 artigos</span>
+      </div>
+      <div id="prodCards"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast-area"></div>
+<div id="loader"><div class="spinner"></div></div>
+
+<script>
+// ── CREDENCIAIS (mesmas do arquivo principal, token só leitura) ──
+function _tk() {
+  const a = '=Q0UQNFaxIHerZ3Xwh2Z';
+  const b = '=EmZwRTO0oVcMRERBhEZzYGVHVHa2FWUk5kd';
+  return atob(a.split('').reverse().join('')) + atob(b.split('').reverse().join(''));
+}
+function _gi() { return ['bf5ebb21','c2dc31fe','186d7586','b501d0cf'].join(''); }
+const GIST_FILE = 'artigos-kb-enotas.json';
+const GH_H = () => ({
+  'Authorization': `token ${_tk()}`,
+  'Accept': 'application/vnd.github.v3+json',
+});
+
+let artigos = [];
+
+// ── CARREGAR DADOS ──
+async function loadData() {
+  setStatus('spin', 'Carregando…');
+  const errBanner = document.getElementById('errBanner');
+  if (errBanner) errBanner.style.display = 'none';
+  loader(true);
+  try {
+    const r = await fetch(`https://api.github.com/gists/${_gi()}`, { headers: GH_H() });
+    if (!r.ok) {
+      const msgs = {401:'401 — Token inválido ou expirado.',403:'403 — Acesso negado.',404:'404 — Gist não encontrado.'};
+      throw new Error(msgs[r.status] || `HTTP ${r.status}`);
+    }
+    const d = await r.json();
+    const artigoFiles = Object.entries(d.files).filter(([n]) => n.startsWith('artigo-') && n.endsWith('.json'));
+    if (artigoFiles.length > 0) {
+      artigos = artigoFiles.map(([,f]) => { try { return JSON.parse(f.content); } catch { return null; } }).filter(Boolean);
+    } else {
+      const meta = JSON.parse(d.files[GIST_FILE]?.content || '{}');
+      const raw  = meta.artigos || [];
+      artigos    = Array.isArray(raw) ? raw : Object.values(raw);
+    }
+    setStatus('ok', `Atualizado às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
+    refreshAll();
+  } catch(e) {
+    setStatus('err', 'Falha ao carregar');
+    if (errBanner) { errBanner.innerHTML = `<strong>⚠️ Erro:</strong> ${e.message}`; errBanner.style.display = 'block'; }
+    console.error(e);
+  }
+  loader(false);
+}
+
+// ── RENDER ──
+function refreshAll() {
+  const homolog  = artigos.filter(a => !a.status || a.status === 'homologacao').sort((a,b)=>(a.top??999)-(b.top??999));
+  const producao = artigos.filter(a => a.status === 'producao').sort((a,b)=>(a.top??999)-(b.top??999));
+
+  setText('kHomolog', homolog.length);
+  setText('kProd',    producao.length);
+  setText('kTotal',   artigos.length);
+  setText('nbHomolog', homolog.length || '—');
+  setText('nbProd',    producao.length || '—');
+  setText('homologCount', `${homolog.length} artigo(s)`);
+  setText('prodCount',    `${producao.length} artigo(s)`);
+
+  // Resumo por analista
+  const at = n => n==='Brena'?'tp':n==='Alexandre'?'tb2':n==='Luana'?'te':n==='Rapha'?'tr':'ttl';
+  const analistas = ['Brena','Alexandre','Luana','Calais','Rapha'];
+  const summaryRow = (list) => analistas.map(n => {
+    const cnt = list.filter(a=>a.analista===n).length;
+    if (!cnt) return '';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;font-weight:600">${n}</span>
+      <span class="tag ${at(n)}">${cnt} artigo(s)</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('overviewHomolog').innerHTML = summaryRow(homolog) ||
+    '<p style="font-size:13px;color:var(--muted)">Nenhum em homologação.</p>';
+  document.getElementById('overviewProd').innerHTML = summaryRow(producao) ||
+    '<p style="font-size:13px;color:var(--muted)">Nenhum em produção ainda.</p>';
+
+  renderOverviewTable();
+  renderCards('homologCards', homolog);
+  renderCards('prodCards',    producao);
+}
+
+function renderOverviewTable() {
+  const filter = document.getElementById('filterOverview').value;
+  let rows = artigos.filter(a => !filter
+    || (filter === 'homologacao' && (!a.status || a.status === 'homologacao'))
+    || (filter === 'producao'    &&  a.status === 'producao'));
+  rows = rows.sort((a,b) => (a.top??999)-(b.top??999));
+
+  const at = n => n==='Brena'?'tp':n==='Alexandre'?'tb2':n==='Luana'?'te':n==='Rapha'?'tr':'ttl';
+  if (!rows.length) {
+    document.getElementById('overviewTable').innerHTML = '<div class="empty-state">Nenhum artigo encontrado.</div>';
+    return;
+  }
+  document.getElementById('overviewTable').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="background:#fafafa;border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:9px 14px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">TOP</th>
+          <th style="text-align:left;padding:9px 14px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Assunto</th>
+          <th style="text-align:left;padding:9px 14px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Analista</th>
+          <th style="text-align:left;padding:9px 14px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Status</th>
+          <th style="text-align:left;padding:9px 14px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Data</th>
+        </tr>
+      </thead>
+      <tbody>${rows.map(a => `<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="toggleDetail(event,'${a.id}')">
+        <td style="padding:10px 14px"><span class="tag tgr">#${a.top??'✦'}</span></td>
+        <td style="padding:10px 14px;font-weight:500">${esc(a.assunto)}</td>
+        <td style="padding:10px 14px"><span class="tag ${at(a.analista)}">${a.analista}</span></td>
+        <td style="padding:10px 14px"><span class="tag ${!a.status||a.status==='homologacao'?'t-homolog':'t-prod'}">${!a.status||a.status==='homologacao'?'⏳ Homologação':'✅ Produção'}</span></td>
+        <td style="padding:10px 14px;color:var(--muted);white-space:nowrap">${a.dataSalvo?new Date(a.dataSalvo).toLocaleDateString('pt-BR'):'—'}</td>
+      </tr>
+      <tr id="det-${a.id}" style="display:none;background:#f9fafb">
+        <td colspan="5" style="padding:14px 18px">
+          ${detailHtml(a)}
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+function renderCards(containerId, list) {
+  const el = document.getElementById(containerId);
+  const at = n => n==='Brena'?'tp':n==='Alexandre'?'tb2':n==='Luana'?'te':n==='Rapha'?'tr':'ttl';
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">Nenhum artigo aqui ainda.</div>';
+    return;
+  }
+  el.innerHTML = list.map(a => `
+    <div class="art-item" onclick="toggleCard(this)">
+      <div class="art-item-head">
+        <span class="tag tgr" style="flex-shrink:0">#${a.top??'✦'}</span>
+        <span style="font-weight:600;flex:1;font-size:13.5px">${esc(a.assunto)}</span>
+        <span class="tag ${at(a.analista)}" style="flex-shrink:0">${a.analista}</span>
+        <span style="color:var(--dim);font-size:13px;flex-shrink:0">▾</span>
+      </div>
+      <div class="art-item-body">
+        ${detailHtml(a)}
+      </div>
+    </div>`).join('');
+}
+
+function detailHtml(a) {
+  const unis = (a.linksUnificados || []);
+  return `<div style="display:flex;flex-direction:column;gap:10px">
+    <div>
+      <div class="lbl" style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Artigo Principal</div>
+      ${a.linkPrincipal
+        ? `<a class="art-link" href="${esc(a.linkPrincipal)}" target="_blank" onclick="event.stopPropagation()">🔗 ${esc(a.linkPrincipal)}</a>`
+        : '<span style="font-size:13px;color:var(--dim)">Não informado</span>'}
+    </div>
+    ${unis.length ? `<div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Links Unificados (${unis.length})</div>
+      <div style="border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+        ${unis.map((l,i) => `<div class="art-uni-item" style="padding:7px 12px;border-bottom:${i<unis.length-1?'1px solid var(--border)':'none'}">
+          <a href="${esc(l)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--primary);text-decoration:none;font-size:12.5px;word-break:break-all">${esc(l)}</a>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+    ${a.titulo ? `<div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Título</div><span style="font-size:13px">${esc(a.titulo)}</span></div>` : ''}
+    <div style="font-size:11.5px;color:var(--dim)">Salvo em ${a.dataSalvo?new Date(a.dataSalvo).toLocaleString('pt-BR'):'—'}</div>
+  </div>`;
+}
+
+function toggleCard(el) {
+  const body = el.querySelector('.art-item-body');
+  const arr  = el.querySelector('.art-item-head span:last-child');
+  body.classList.toggle('open');
+  if (arr) arr.textContent = body.classList.contains('open') ? '▴' : '▾';
+}
+
+function toggleDetail(event, id) {
+  event.stopPropagation();
+  const tr = document.getElementById(`det-${id}`);
+  if (!tr) return;
+  tr.style.display = tr.style.display === 'none' ? '' : 'none';
+}
+
+// ── NAV ──
+function goTo(view) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`view-${view}`)?.classList.add('active');
+  document.getElementById(`nav-${view}`)?.classList.add('active');
+}
+
+// ── UTILS ──
+function setStatus(type, txt) {
+  document.getElementById('sdot').className = `sdot ${type}`;
+  document.getElementById('stxt').textContent = txt;
+}
+function setText(id, v) { const e=document.getElementById(id); if(e) e.textContent=v; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function loader(on) { document.getElementById('loader').classList.toggle('on',on); }
+function toast(msg, type='ok') {
+  const d=document.createElement('div');
+  d.className=`toast ${type}`;
+  d.innerHTML=`${type==='ok'?'✅':type==='err'?'❌':'ℹ️'} ${msg}`;
+  document.getElementById('toast-area').appendChild(d);
+  setTimeout(()=>d.remove(),4500);
+}
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  const img=document.getElementById('logoImg');
+  if(img) img.onerror=()=>{img.style.display='none';document.getElementById('logoFb').style.display='flex';};
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  // Atualiza automaticamente todos os dias às 18h
+  function scheduleDaily() {
+    const now    = new Date();
+    const target = new Date(now);
+    target.setHours(18, 0, 0, 0);
+    if (now >= target) target.setDate(target.getDate() + 1);
+    setTimeout(() => { loadData(); scheduleDaily(); }, target - now);
+  }
+  scheduleDaily();
+});
+</script>
+</body>
+</html>
